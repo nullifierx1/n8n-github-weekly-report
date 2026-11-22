@@ -22,7 +22,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const weekStart = $input.first().json.query?.weekStart;\nconst date = new Date(typeof weekStart === 'string' ? weekStart + 'T00:00:00Z' : NaN);\nconst valid = typeof weekStart === 'string'\n  && /^\\d{4}-\\d{2}-\\d{2}$/.test(weekStart)\n  && Number.isFinite(date.getTime())\n  && date.toISOString().slice(0, 10) === weekStart\n  && date.getUTCDay() === 1\n  && date.getUTCFullYear() >= 2008\n  && date.getUTCFullYear() <= 9998;\nif (!valid) return [{ json: { valid, error: 'weekStart must be a Monday (YYYY-MM-DD)' } }];\n\nconst offset = (days) => new Date(date.getTime() + days * 86400000).toISOString().slice(0, 10);\nreturn [{ json: {\n  valid,\n  weekStart,\n  weekEnd: offset(6),\n  current: weekStart + '..' + offset(6),\n  previous: offset(-7) + '..' + offset(-1)\n} }];"
+        "jsCode": "const weekStart = $input.first().json.query?.weekStart;\nconst date = new Date(typeof weekStart === 'string' ? weekStart + 'T00:00:00Z' : NaN);\nconst valid = typeof weekStart === 'string'\n  && /^\\d{4}-\\d{2}-\\d{2}$/.test(weekStart)\n  && Number.isFinite(date.getTime())\n  && date.toISOString().slice(0, 10) === weekStart\n  && date.getUTCDay() === 1\n  && date.getUTCFullYear() >= 2008\n  && date.getUTCFullYear() <= 9998;\nif (!valid) return [{ json: { valid } }];\n\nconst repository = 'nullifierx1/n8n-code-review-test';\nconst offset = (days) => new Date(date.getTime() + days * 86400000).toISOString().slice(0, 10);\nreturn [{ json: {\n  valid, weekStart, weekEnd: offset(6), weekEndExclusive: offset(7),\n  currentKey: repository + '#' + weekStart,\n  previousKey: repository + '#' + offset(-7),\n} }];"
       },
       "id": "9ece42d2-d8c5-4b5d-a544-1935ced05431",
       "name": "Validate week",
@@ -44,7 +44,7 @@
           },
           "conditions": [
             {
-              "id": "c090459d-ab66-4c86-8034-bebb58992192",
+              "id": "fb9568fa-1271-43bb-b64e-54de69bcbe6e",
               "leftValue": "={{ $json.valid }}",
               "rightValue": "",
               "operator": {
@@ -70,7 +70,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: $json.error } }}",
+        "responseBody": "={{ { status: 'error', message: 'Укажите понедельник в формате YYYY-MM-DD' } }}",
         "options": {
           "responseCode": 400
         }
@@ -86,113 +86,78 @@
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "TaNHNo4q6sAD9eY9",
+          "mode": "list",
+          "cachedResultName": "weekly_issue_stats"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
             {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue created:' + $('Validate week').first().json.current }}"
-            },
-            {
-              "name": "per_page",
-              "value": "100"
+              "keyName": "report_key",
+              "keyValue": "={{ $('Validate week').first().json.currentKey }}"
             }
           ]
         },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 6000
-        }
+        "limit": 2
       },
-      "id": "caa85fa8-f9f3-4c77-bf6c-d818ec367aba",
-      "name": "Opened issues",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "d8c14a4f-ed2d-4bbe-b081-68d43601eb86",
+      "name": "Read selected week",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
       "position": [
         660,
         0
-      ]
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue closed:' + $('Validate week').first().json.current }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 6000
-        }
+        "jsCode": "const { currentKey, weekStart } = $('Validate week').first().json;\nconst rows = $input.all().map(({ json }) => json).filter((row) => Object.keys(row).length > 0);\nif (rows.length > 1 || rows.some((row) => row.report_key !== currentKey)) {\n  throw new Error('Invalid or duplicate selected row');\n}\nreturn [{ json: { weekStart, row: rows[0] ?? null } }];"
       },
-      "id": "1b6022b2-49a1-4ac5-b67a-b0683e0c8c24",
-      "name": "Closed issues",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "ca8a831e-c6c5-4c8e-a788-a4d8c94fc205",
+      "name": "Select current row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         880,
         0
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
             {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr created:' + $('Validate week').first().json.current }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
+              "id": "f7c693c6-9fe9-4ccc-ab1b-715c8b35a261",
+              "leftValue": "={{ $json.row !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
-          ]
+          ],
+          "combinator": "and"
         },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 6000
-        }
+        "options": {}
       },
-      "id": "1ed84d17-e6eb-4b6f-b049-83aac1858337",
-      "name": "Opened PRs",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "f0e0d653-7c5a-4835-9990-5972056edc2b",
+      "name": "Report found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
       "position": [
         1100,
         0
@@ -200,113 +165,77 @@
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr merged:' + $('Validate week').first().json.current }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'empty', weekStart: $json.weekStart, message: 'За выбранную неделю сохранённого отчёта нет' } }}",
         "options": {
-          "timeout": 6000
+          "responseCode": 200
         }
       },
-      "id": "8a04a383-d3d0-427b-b2ac-674ffc62ee03",
-      "name": "Merged PRs",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "ce241cad-e2ca-4365-b798-e27845cef0ba",
+      "name": "Respond empty",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1320,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "TaNHNo4q6sAD9eY9",
+          "mode": "list",
+          "cachedResultName": "weekly_issue_stats"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "report_key",
+              "keyValue": "={{ $('Validate week').first().json.previousKey }}"
+            }
+          ]
+        },
+        "limit": 2
+      },
+      "id": "50a4c69c-dafc-4964-a967-6bc30dca1dc3",
+      "name": "Read previous week",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
       "position": [
         1320,
         0
-      ]
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue created:' + $('Validate week').first().json.previous }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 6000
-        }
+        "jsCode": "const { weekStart, weekEnd, weekEndExclusive, previousKey } = $('Validate week').first().json;\nconst { row } = $('Select current row').first().json;\nconst previousRows = $input.all().map(({ json }) => json).filter((entry) => Object.keys(entry).length > 0);\nif (previousRows.length > 1 || previousRows.some((entry) => entry.report_key !== previousKey)) {\n  throw new Error('Invalid or duplicate previous row');\n}\nconst isCount = (value) => Number.isSafeInteger(value) && value >= 0;\nfunction countsFrom(entry) {\n  const counts = {\n    openedIssues: entry.issues_created,\n    closedIssues: entry.issues_closed,\n    openedPrs: entry.prs_created,\n    mergedPrs: entry.prs_merged,\n  };\n  if (!Object.values(counts).every(isCount)) throw new Error('Invalid metric count');\n  return counts;\n}\nfunction checkPeriod(entry, start, endExclusive) {\n  if (Date.parse(entry.week_start) !== Date.parse(start + 'T00:00:00Z') ||\n      Date.parse(entry.week_end) !== Date.parse(endExclusive + 'T00:00:00Z')) {\n    throw new Error('Invalid saved report period');\n  }\n}\nfunction parseBreakdowns(entry) {\n  const types = JSON.parse(entry.by_type_json);\n  const authors = JSON.parse(entry.by_author_json);\n  const categories = ['bug', 'task', 'feature', 'unknown'];\n  if (!types || typeof types !== 'object' || Array.isArray(types) ||\n      Object.keys(types).length !== categories.length ||\n      !categories.every((key) => isCount(types[key])) ||\n      !Array.isArray(authors) || !authors.every((item) => item &&\n        typeof item.author === 'string' && item.author.length && isCount(item.issues_created)) ||\n      new Set(authors.map((item) => item.author)).size !== authors.length) {\n    throw new Error('Invalid saved report breakdown');\n  }\n  return {\n    byType: categories.map((label) => ({ label, count: types[label] })),\n    byAuthor: authors.map(({ author, issues_created }) => ({ label: author, count: issues_created })),\n  };\n}\n\ncheckPeriod(row, weekStart, weekEndExclusive);\nconst counts = countsFrom(row);\nconst { byType, byAuthor } = parseBreakdowns(row);\nconst previous = previousRows[0];\nlet comparison = null;\nif (previous) {\n  checkPeriod(previous, previousKey.slice(-10), weekStart);\n  const previousCounts = countsFrom(previous);\n  parseBreakdowns(previous);\n  comparison = Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, value - previousCounts[key]]));\n}\nreturn [{ json: { status: 'success', weekStart, weekEnd, counts, byType, byAuthor, comparison } }];"
       },
-      "id": "053d4889-f4c9-47cb-a33b-0c33d2be4a53",
-      "name": "Previous opened issues",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "44df5602-d3a4-4416-8a11-5097c968d701",
+      "name": "Build report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         1540,
         0
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue closed:' + $('Validate week').first().json.previous }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
+        "respondWith": "firstIncomingItem",
         "options": {
-          "timeout": 6000
+          "responseCode": 200
         }
       },
-      "id": "57ce2bfc-e028-4484-a2b0-3721cb48bf7f",
-      "name": "Previous closed issues",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "0851dad3-5674-4408-ba2a-7e6e38cb0a87",
+      "name": "Respond with report",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
       "position": [
         1760,
         0
@@ -314,105 +243,19 @@
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr created:' + $('Validate week').first().json.previous }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', message: 'Не удалось загрузить сохранённый отчёт' } }}",
         "options": {
-          "timeout": 6000
+          "responseCode": 500
         }
       },
-      "id": "a84e58ee-573e-4f54-84dd-3a1741e55cac",
-      "name": "Previous opened PRs",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1980,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "url": "https://api.github.com/search/issues",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "q",
-              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr merged:' + $('Validate week').first().json.previous }}"
-            },
-            {
-              "name": "per_page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept",
-              "value": "application/vnd.github+json"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 6000
-        }
-      },
-      "id": "d8d2aa02-2608-4faa-8522-ac86df6d7e98",
-      "name": "Previous merged PRs",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2200,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const { weekStart, weekEnd } = $('Validate week').first().json;\nconst count = (node) => {\n  const data = $(node).first().json;\n  if (data.incomplete_results || !Number.isSafeInteger(data.total_count)) {\n    throw new Error('GitHub returned incomplete statistics');\n  }\n  return data.total_count;\n};\n\nconst counts = {\n  openedIssues: count('Opened issues'),\n  closedIssues: count('Closed issues'),\n  openedPrs: count('Opened PRs'),\n  mergedPrs: count('Merged PRs'),\n};\nconst items = $('Opened issues').first().json.items;\nif (!Array.isArray(items) || items.length !== counts.openedIssues) {\n  throw new Error('Issue breakdown exceeds the page size or GitHub returned incomplete data');\n}\n\nconst previous = {\n  openedIssues: count('Previous opened issues'),\n  closedIssues: count('Previous closed issues'),\n  openedPrs: count('Previous opened PRs'),\n  mergedPrs: count('Previous merged PRs'),\n};\nconst comparison = Object.fromEntries(Object.keys(counts).map((key) => [key, counts[key] - previous[key]]));\nconst types = new Map();\nconst authors = new Map();\nconst increment = (map, key) => map.set(key, (map.get(key) ?? 0) + 1);\nfor (const issue of items) {\n  const labels = new Set(issue.labels.map((label) => label.name.toLowerCase()));\n  const type = ['bug', 'task', 'feature', 'feature-request'].find((label) => labels.has(label)) ?? 'unknown';\n  increment(types, type === 'feature-request' ? 'feature' : type);\n  increment(authors, issue.user?.login ?? 'unknown');\n}\nconst breakdown = (map) => [...map].sort(([a], [b]) => a.localeCompare(b)).map(([label, count]) => ({ label, count }));\nreturn [{ json: { weekStart, weekEnd, counts, byType: breakdown(types), byAuthor: breakdown(authors), comparison } }];"
-      },
-      "id": "44df5602-d3a4-4416-8a11-5097c968d701",
-      "name": "Build report",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2420,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "firstIncomingItem",
-        "options": {}
-      },
-      "id": "0851dad3-5674-4408-ba2a-7e6e38cb0a87",
-      "name": "Respond with report",
+      "id": "b6624eac-19e0-41ea-b345-9c2ee9153510",
+      "name": "Respond 500",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        2640,
-        0
+        1760,
+        440
       ]
     }
   ],
@@ -439,88 +282,11 @@
         ]
       ]
     },
-    "Opened issues": {
-      "main": [
-        [
-          {
-            "node": "Closed issues",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Closed issues": {
-      "main": [
-        [
-          {
-            "node": "Opened PRs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Opened PRs": {
-      "main": [
-        [
-          {
-            "node": "Merged PRs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merged PRs": {
-      "main": [
-        [
-          {
-            "node": "Previous opened issues",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Previous opened issues": {
-      "main": [
-        [
-          {
-            "node": "Previous closed issues",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Previous closed issues": {
-      "main": [
-        [
-          {
-            "node": "Previous opened PRs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Previous opened PRs": {
-      "main": [
-        [
-          {
-            "node": "Previous merged PRs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Valid Monday?": {
       "main": [
         [
           {
-            "node": "Opened issues",
+            "node": "Read selected week",
             "type": "main",
             "index": 0
           }
@@ -534,11 +300,72 @@
         ]
       ]
     },
-    "Previous merged PRs": {
+    "Read selected week": {
+      "main": [
+        [
+          {
+            "node": "Select current row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select current row": {
+      "main": [
+        [
+          {
+            "node": "Report found?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report found?": {
+      "main": [
+        [
+          {
+            "node": "Read previous week",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read previous week": {
       "main": [
         [
           {
             "node": "Build report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500",
             "type": "main",
             "index": 0
           }
@@ -550,6 +377,13 @@
         [
           {
             "node": "Respond with report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 500",
             "type": "main",
             "index": 0
           }
