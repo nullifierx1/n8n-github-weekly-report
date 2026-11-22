@@ -89,45 +89,50 @@ function App() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-7 px-5 py-10 sm:py-14">
-      <header>
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <GitPullRequest size={16} aria-hidden="true" /> nullifierx1 / n8n-code-review-test
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">Недельный отчёт GitHub</h1>
+    <>
+      <header className="border-b bg-card">
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-5 py-3">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+            <GitPullRequest size={16} aria-hidden="true" />
+          </span>
+          <p className="min-w-0 break-words text-sm font-medium">nullifierx1 / n8n-code-review-test</p>
+        </div>
       </header>
-      <Card>
-        <CardContent>
-          <form onSubmit={submit} noValidate className="flex flex-wrap items-end gap-3">
-            <div className="w-full space-y-2 sm:w-auto">
-              <Label htmlFor="week">Начало недели</Label>
-              <Input
-                id="week" type="date" value={week} required readOnly={loading}
-                aria-invalid={Boolean(fieldError)}
-                aria-describedby={fieldError ? 'week-error' : undefined}
-                onChange={(event) => { setWeek(event.target.value); setFieldError('') }}
-              />
-            </div>
-            <Button type="submit" disabled={loading}>
-              {loading ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" /> : <CalendarDays aria-hidden="true" />}
-              Показать отчёт
-            </Button>
-            {fieldError && <p id="week-error" role="alert" className="w-full text-sm text-destructive">{fieldError}</p>}
-          </form>
-        </CardContent>
-      </Card>
-      <div role="status" className={loading ? 'rounded-lg border bg-card p-4 text-muted-foreground' : 'sr-only'}>
-        {loading ? 'Загружаем отчёт…' : result.status === 'success' ? 'Отчёт загружен' : ''}
-      </div>
-      {result.status === 'error' && (
-        <Alert variant="destructive" role="alert">
-          <CircleAlert aria-hidden="true" />
-          <AlertTitle>Не удалось загрузить отчёт</AlertTitle>
-          <AlertDescription>Проверьте подключение и повторите попытку.</AlertDescription>
-        </Alert>
-      )}
-      {result.status === 'success' && <ReportView report={result.report} />}
-    </main>
+      <main className="mx-auto w-full max-w-5xl space-y-6 px-5 py-8 sm:py-10">
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Недельный отчёт GitHub</h1>
+        <Card>
+          <CardContent>
+            <form onSubmit={submit} noValidate className="flex flex-wrap items-end gap-3">
+              <div className="w-full space-y-2 sm:w-auto">
+                <Label htmlFor="week">Начало недели</Label>
+                <Input
+                  id="week" type="date" value={week} required readOnly={loading}
+                  aria-invalid={Boolean(fieldError)}
+                  aria-describedby={fieldError ? 'week-error' : undefined}
+                  onChange={(event) => { setWeek(event.target.value); setFieldError('') }}
+                />
+              </div>
+              <Button type="submit" disabled={loading}>
+                {loading ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" /> : <CalendarDays aria-hidden="true" />}
+                Показать отчёт
+              </Button>
+              {fieldError && <p id="week-error" role="alert" className="w-full text-sm text-destructive">{fieldError}</p>}
+            </form>
+          </CardContent>
+        </Card>
+        <div role="status" className={loading ? 'rounded-lg border bg-card p-4 text-muted-foreground' : 'sr-only'}>
+          {loading ? 'Загружаем отчёт…' : result.status === 'success' ? 'Отчёт загружен' : ''}
+        </div>
+        {result.status === 'error' && (
+          <Alert variant="destructive" role="alert">
+            <CircleAlert aria-hidden="true" />
+            <AlertTitle>Не удалось загрузить отчёт</AlertTitle>
+            <AlertDescription>Проверьте подключение и повторите попытку.</AlertDescription>
+          </Alert>
+        )}
+        {result.status === 'success' && <ReportView report={result.report} />}
+      </main>
+    </>
   )
 }
 
