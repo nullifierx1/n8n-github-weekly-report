@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { fetchReport, formatPeriod, metricKeys, metrics, validateWeek, type Breakdown, type Report } from './report'
+import { fetchReport, formatPeriod, metricKeys, metrics, validateWeek, type Breakdown, type Report, type ReportResponse } from './report'
 import './style.css'
 
-type Result = { status: 'initial' | 'loading' | 'error' } | { status: 'success'; report: Report }
+type Result = { status: 'initial' | 'loading' | 'error' } | ReportResponse
 
 function BreakdownCard({ title, rows }: { title: string; rows: Breakdown[] }) {
   return (
@@ -36,7 +36,7 @@ function ReportView({ report }: { report: Report }) {
     <section aria-labelledby="report-title" className="space-y-4">
       <div>
         <h2 id="report-title" className="text-2xl font-semibold">{formatPeriod(report.weekStart, report.weekEnd)}</h2>
-        {empty && <p className="mt-1 text-muted-foreground">За эту неделю нет активности</p>}
+        {empty && <p className="mt-1 text-muted-foreground">Сохранённый отчёт: за эту неделю нет активности</p>}
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {metricKeys.map((key) => (
@@ -80,7 +80,7 @@ function App() {
     pending.current = true
     setResult({ status: 'loading' })
     try {
-      setResult({ status: 'success', report: await fetchReport(week) })
+      setResult(await fetchReport(week))
     } catch {
       setResult({ status: 'error' })
     } finally {
@@ -99,7 +99,7 @@ function App() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-5xl space-y-6 px-5 py-8 sm:py-10">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Недельный отчёт GitHub</h1>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Сохранённые недельные отчёты GitHub</h1>
         <Card>
           <CardContent>
             <form onSubmit={submit} noValidate className="flex flex-wrap items-end gap-3">
@@ -130,7 +130,13 @@ function App() {
             <AlertDescription>Проверьте подключение и повторите попытку.</AlertDescription>
           </Alert>
         )}
-        {result.status === 'success' && <ReportView report={result.report} />}
+        {result.status === 'success' && <ReportView report={result} />}
+        {result.status === 'empty' && (
+          <Alert role="status">
+            <AlertTitle className="line-clamp-none">{result.message}</AlertTitle>
+            <AlertDescription>Неделя с {formatPeriod(result.weekStart, result.weekStart)}</AlertDescription>
+          </Alert>
+        )}
       </main>
     </>
   )

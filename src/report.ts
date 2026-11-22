@@ -11,12 +11,19 @@ export type Counts = Record<keyof typeof metrics, number>
 export type Breakdown = { label: string; count: number }
 
 export interface Report {
+  status: 'success'
   weekStart: string
   weekEnd: string
   counts: Counts
   comparison: Counts | null
   byType: Breakdown[]
   byAuthor: Breakdown[]
+}
+
+export type ReportResponse = Report | {
+  status: 'empty'
+  weekStart: string
+  message: string
 }
 
 export function validateWeek(value: string) {
@@ -52,14 +59,19 @@ function isBreakdown(value: unknown): value is Breakdown[] {
 function isReport(value: unknown, weekStart: string): value is Report {
   const weekEnd = new Date(weekStart + 'T00:00:00Z')
   weekEnd.setUTCDate(weekEnd.getUTCDate() + 6)
-  return isRecord(value) && value.weekStart === weekStart
+  return isRecord(value) && value.status === 'success' && value.weekStart === weekStart
     && value.weekEnd === weekEnd.toISOString().slice(0, 10)
     && isCounts(value.counts, false)
     && (value.comparison === null || isCounts(value.comparison, true))
     && isBreakdown(value.byType) && isBreakdown(value.byAuthor)
 }
 
-export async function fetchReport(weekStart: string): Promise<Report> {
+export function isReportResponse(value: unknown, weekStart: string): value is ReportResponse {
+  return isReport(value, weekStart) || (isRecord(value) && value.status === 'empty'
+    && value.weekStart === weekStart && typeof value.message === 'string' && value.message.trim().length > 0)
+}
+
+export async function fetchReport(weekStart: string): Promise<ReportResponse> {
   const query = new URLSearchParams({ weekStart })
   const response = await fetch('/api/weekly-report?' + query, {
     headers: { Accept: 'application/json' },
@@ -67,7 +79,7 @@ export async function fetchReport(weekStart: string): Promise<Report> {
   })
   if (!response.ok) throw new Error('Report request failed')
   const report: unknown = await response.json()
-  if (!isReport(report, weekStart)) throw new Error('Invalid report response')
+  if (!isReportResponse(report, weekStart)) throw new Error('Invalid report response')
   return report
 }
 

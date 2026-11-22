@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { activeWeek, emptyWeek } from './report-fixtures'
+import { activeWeek, missingWeek, zeroWeek } from './report-fixtures'
 
 const api = '**/api/weekly-report?**'
 
@@ -67,14 +67,24 @@ test('пока ответ задержан, повторная отправка 
   expect(requests).toBe(1)
 })
 
-test('пустая неделя показывает нули и отсутствие предыдущей сводки', async ({ page }) => {
-  await page.route(api, (route) => route.fulfill({ json: emptyWeek }))
+test('сохранённая нулевая неделя показывает четыре нуля и отсутствие сравнения', async ({ page }) => {
+  await page.route(api, (route) => route.fulfill({ json: zeroWeek }))
   await page.goto('/')
-  await page.getByLabel('Начало недели').fill(emptyWeek.weekStart)
+  await page.getByLabel('Начало недели').fill(zeroWeek.weekStart)
   await page.getByRole('button', { name: 'Показать отчёт' }).click()
   await expect(page.getByText('За эту неделю нет активности')).toBeVisible()
   await expect(page.getByText('Данных за предыдущую неделю нет')).toBeVisible()
   await expect(page.getByText('0', { exact: true })).toHaveCount(4)
+})
+
+test('отсутствующая строка не показывает нулевой отчёт', async ({ page }) => {
+  await page.route(api, (route) => route.fulfill({ json: missingWeek }))
+  await page.goto('/')
+  await page.getByLabel('Начало недели').fill(missingWeek.weekStart)
+  await page.getByRole('button', { name: 'Показать отчёт' }).click()
+  await expect(page.getByText(missingWeek.message)).toBeVisible()
+  await expect(page.getByText(/Неделя с 30 ноября 2026/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Создано Issues' })).toHaveCount(0)
 })
 
 test('ошибка сохраняет дату и позволяет повторить запрос', async ({ page }) => {
@@ -92,5 +102,6 @@ test('ошибка сохраняет дату и позволяет повто�
   await submit.click()
   await expect(page.getByRole('status')).toHaveText('Отчёт загружен')
   await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByRole('region', { name: /16.*22 ноября 2026/ })).toBeVisible()
   expect(requests).toBe(2)
 })
