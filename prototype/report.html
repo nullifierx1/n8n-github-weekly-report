@@ -2,7 +2,7 @@
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Прототип — Недельный отчёт GitHub</title>
+<title>Прототип — Сохранённые недельные отчёты GitHub</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f5f6fa;color:#172039;font:16px system-ui}main{max-width:1024px;margin:auto;padding:32px 20px}.top{background:white;border-bottom:1px solid #dbe1ee}.top div{max-width:1024px;margin:auto;padding:12px 20px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500}.repo-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#234ac3;color:white;flex:none}
 h1{font-size:clamp(30px,5vw,36px);margin:0 0 24px;letter-spacing:-.025em}p{color:#526079}.panel,article{background:white;border:1px solid #dbe1ee;border-radius:14px;padding:20px}
@@ -13,13 +13,14 @@ label{display:grid;gap:8px}button,input,select{font:inherit;border-radius:8px;pa
 </style>
 <header class="top"><div><span class="repo-icon" aria-hidden="true">◇</span>nullifierx1 / n8n-code-review-test</div></header>
 <main>
-<h1>Недельный отчёт GitHub</h1>
+<h1>Сохранённые недельные отчёты GitHub</h1>
 <form class="panel">
 <label>Начало недели<input id="week" type="date"></label>
 <button id="submit">Показать отчёт</button>
 </form>
 <p id="error" role="alert" hidden>Не удалось загрузить отчёт. Повторите попытку.</p>
 <p id="status" role="status"></p>
+<p id="missing" hidden>За выбранную неделю сохранённого отчёта нет</p>
 <section id="result" hidden>
 <h2>16–22 ноября 2026</h2>
 <div class="grid">
@@ -36,7 +37,7 @@ label{display:grid;gap:8px}button,input,select{font:inherit;border-radius:8px;pa
 <select id="state">
 <option value="initial">Исходный экран</option><option value="input">Введена дата</option>
 <option value="loading">Загрузка</option><option value="success">Отчёт</option>
-<option value="empty">Пустая неделя</option><option value="error">Ошибка</option>
+<option value="zero">Сохранённый отчёт с нулями</option><option value="missing">Отчёт отсутствует</option><option value="error">Ошибка</option>
 </select></label>
 </main>
 <script>
@@ -45,27 +46,32 @@ const state = byId('state')
 const numbers = document.querySelectorAll('.grid strong')
 function render() {
   const view = state.value
-  byId('week').value = view === 'initial' ? '' : view === 'empty' ? '2026-11-09' : '2026-11-16'
+  byId('week').value = view === 'initial' ? '' : view === 'zero' ? '2026-11-09' : view === 'missing' ? '2026-11-30' : '2026-11-16'
   byId('submit').disabled = view === 'loading'
+  byId('missing').hidden = view !== 'missing'
   byId('error').hidden = view !== 'error'
-  byId('status').textContent = view === 'loading' ? 'Загружаем отчёт…' : view === 'empty' ? 'За эту неделю нет активности' : ''
-  byId('result').hidden = !['success', 'empty'].includes(view)
-  document.querySelector('#result h2').textContent = view === 'empty' ? '9–15 ноября 2026' : '16–22 ноября 2026'
-  document.querySelector('.split').hidden = view === 'empty'
-  document.querySelector('.split').style.display = view === 'empty' ? 'none' : ''
+  byId('status').textContent = view === 'loading' ? 'Загружаем отчёт…' : view === 'zero' ? 'Сохранённый отчёт: за эту неделю нет активности' : ''
+  byId('result').hidden = !['success', 'zero'].includes(view)
+  document.querySelector('#result h2').textContent = view === 'zero' ? '9–15 ноября 2026' : '16–22 ноября 2026'
+  document.querySelector('.split').hidden = view === 'zero'
+  document.querySelector('.split').style.display = view === 'zero' ? 'none' : ''
   byId('comparison-empty').hidden = view !== 'empty'
-  document.querySelectorAll('.delta').forEach(delta => { delta.hidden = view === 'empty' })
-  numbers.forEach((number, index) => { number.textContent = view === 'empty' ? '0' : [8, 4, 7, 1][index] })
+  document.querySelectorAll('.delta').forEach(delta => { delta.hidden = view === 'zero' })
+  numbers.forEach((number, index) => { number.textContent = view === 'zero' ? '0' : [8, 4, 7, 1][index] })
 }
 state.addEventListener('change', render)
 document.querySelector('form').addEventListener('submit', event => {
   event.preventDefault()
+  const requested = byId('week').value
+  const next = requested === '2026-11-09' ? 'zero' : requested === '2026-11-16' ? 'success' : 'missing'
   state.value = 'loading'
   render()
+  byId('week').value = requested
   setTimeout(() => {
     if (state.value === 'loading') {
-      state.value = 'success'
+      state.value = next
       render()
+      byId('week').value = requested
     }
   }, 650)
 })
