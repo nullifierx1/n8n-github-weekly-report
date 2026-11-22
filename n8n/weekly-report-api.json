@@ -1,0 +1,564 @@
+{
+  "name": "Practice 8 - GitHub Weekly Report API",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "github-weekly-report",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "66881667-4055-468d-82a0-6764bbaf2e49",
+      "name": "Weekly report webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b2b23562-5a3c-4716-ab3b-119b6f75639e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const weekStart = $input.first().json.query?.weekStart;\nconst date = new Date(typeof weekStart === 'string' ? weekStart + 'T00:00:00Z' : NaN);\nconst valid = typeof weekStart === 'string'\n  && /^\\d{4}-\\d{2}-\\d{2}$/.test(weekStart)\n  && Number.isFinite(date.getTime())\n  && date.toISOString().slice(0, 10) === weekStart\n  && date.getUTCDay() === 1\n  && date.getUTCFullYear() >= 2008\n  && date.getUTCFullYear() <= 9998;\nif (!valid) return [{ json: { valid, error: 'weekStart must be a Monday (YYYY-MM-DD)' } }];\n\nconst offset = (days) => new Date(date.getTime() + days * 86400000).toISOString().slice(0, 10);\nreturn [{ json: {\n  valid,\n  weekStart,\n  weekEnd: offset(6),\n  current: weekStart + '..' + offset(6),\n  previous: offset(-7) + '..' + offset(-1)\n} }];"
+      },
+      "id": "9ece42d2-d8c5-4b5d-a544-1935ced05431",
+      "name": "Validate week",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c090459d-ab66-4c86-8034-bebb58992192",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0b0e03fd-c3c9-42f7-b60f-3b8d6695827f",
+      "name": "Valid Monday?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.error } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "e17f645a-a61a-43ff-9c24-ea2a4014a327",
+      "name": "Respond 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue created:' + $('Validate week').first().json.current }}"
+            },
+            {
+              "name": "per_page",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "caa85fa8-f9f3-4c77-bf6c-d818ec367aba",
+      "name": "Opened issues",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue closed:' + $('Validate week').first().json.current }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "1b6022b2-49a1-4ac5-b67a-b0683e0c8c24",
+      "name": "Closed issues",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr created:' + $('Validate week').first().json.current }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "1ed84d17-e6eb-4b6f-b049-83aac1858337",
+      "name": "Opened PRs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr merged:' + $('Validate week').first().json.current }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "8a04a383-d3d0-427b-b2ac-674ffc62ee03",
+      "name": "Merged PRs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue created:' + $('Validate week').first().json.previous }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "053d4889-f4c9-47cb-a33b-0c33d2be4a53",
+      "name": "Previous opened issues",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:issue closed:' + $('Validate week').first().json.previous }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "57ce2bfc-e028-4484-a2b0-3721cb48bf7f",
+      "name": "Previous closed issues",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr created:' + $('Validate week').first().json.previous }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "a84e58ee-573e-4f54-84dd-3a1741e55cac",
+      "name": "Previous opened PRs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/search/issues",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ 'repo:nullifierx1/n8n-code-review-test is:pr merged:' + $('Validate week').first().json.previous }}"
+            },
+            {
+              "name": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 6000
+        }
+      },
+      "id": "d8d2aa02-2608-4faa-8522-ac86df6d7e98",
+      "name": "Previous merged PRs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { weekStart, weekEnd } = $('Validate week').first().json;\nconst count = (node) => {\n  const data = $(node).first().json;\n  if (data.incomplete_results || !Number.isSafeInteger(data.total_count)) {\n    throw new Error('GitHub returned incomplete statistics');\n  }\n  return data.total_count;\n};\n\nconst counts = {\n  openedIssues: count('Opened issues'),\n  closedIssues: count('Closed issues'),\n  openedPrs: count('Opened PRs'),\n  mergedPrs: count('Merged PRs'),\n};\nconst items = $('Opened issues').first().json.items;\nif (!Array.isArray(items) || items.length !== counts.openedIssues) {\n  throw new Error('Issue breakdown exceeds the page size or GitHub returned incomplete data');\n}\n\nconst previous = {\n  openedIssues: count('Previous opened issues'),\n  closedIssues: count('Previous closed issues'),\n  openedPrs: count('Previous opened PRs'),\n  mergedPrs: count('Previous merged PRs'),\n};\nconst comparison = Object.fromEntries(Object.keys(counts).map((key) => [key, counts[key] - previous[key]]));\nconst types = new Map();\nconst authors = new Map();\nconst increment = (map, key) => map.set(key, (map.get(key) ?? 0) + 1);\nfor (const issue of items) {\n  const labels = new Set(issue.labels.map((label) => label.name.toLowerCase()));\n  const type = ['bug', 'task', 'feature', 'feature-request'].find((label) => labels.has(label)) ?? 'unknown';\n  increment(types, type === 'feature-request' ? 'feature' : type);\n  increment(authors, issue.user?.login ?? 'unknown');\n}\nconst breakdown = (map) => [...map].sort(([a], [b]) => a.localeCompare(b)).map(([label, count]) => ({ label, count }));\nreturn [{ json: { weekStart, weekEnd, counts, byType: breakdown(types), byAuthor: breakdown(authors), comparison } }];"
+      },
+      "id": "44df5602-d3a4-4416-8a11-5097c968d701",
+      "name": "Build report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "id": "0851dad3-5674-4408-ba2a-7e6e38cb0a87",
+      "name": "Respond with report",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2640,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Weekly report webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate week": {
+      "main": [
+        [
+          {
+            "node": "Valid Monday?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Opened issues": {
+      "main": [
+        [
+          {
+            "node": "Closed issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Closed issues": {
+      "main": [
+        [
+          {
+            "node": "Opened PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Opened PRs": {
+      "main": [
+        [
+          {
+            "node": "Merged PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merged PRs": {
+      "main": [
+        [
+          {
+            "node": "Previous opened issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Previous opened issues": {
+      "main": [
+        [
+          {
+            "node": "Previous closed issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Previous closed issues": {
+      "main": [
+        [
+          {
+            "node": "Previous opened PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Previous opened PRs": {
+      "main": [
+        [
+          {
+            "node": "Previous merged PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Monday?": {
+      "main": [
+        [
+          {
+            "node": "Opened issues",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Previous merged PRs": {
+      "main": [
+        [
+          {
+            "node": "Build report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build report": {
+      "main": [
+        [
+          {
+            "node": "Respond with report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC"
+  }
+}
