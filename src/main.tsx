@@ -40,13 +40,13 @@ function ReportView({ report }: { report: Report }) {
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {metricKeys.map((key) => (
-          <Card key={key} className="gap-3 py-4">
+          <Card key={key} className="gap-2 py-4">
             <CardHeader className="px-4"><CardTitle><h3 className="text-sm text-muted-foreground">{metrics[key]}</h3></CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="px-4">
               <p className="text-3xl font-semibold tabular-nums">{report.counts[key]}</p>
               {report.comparison && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {new Intl.NumberFormat('ru', { signDisplay: 'exceptZero' }).format(report.comparison[key])} к прошлой неделе
+                <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
+                  <span className="rounded-full border bg-background px-2 py-0.5 font-medium tabular-nums text-foreground">{new Intl.NumberFormat('ru', { signDisplay: 'exceptZero' }).format(report.comparison[key])}</span> к прошлой неделе
                 </p>
               )}
             </CardContent>
