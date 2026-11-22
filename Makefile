@@ -42,7 +42,7 @@ check: build
 	$(MAKE) test
 
 test-report:
-	$(NPM) exec -- playwright show-report
+	$(NPM) exec -- playwright show-report --host 127.0.0.1 --port 9324
 
 visual-snapshots:
 	$(NPM) test -- tests/visual.spec.ts --update-snapshots=missing
