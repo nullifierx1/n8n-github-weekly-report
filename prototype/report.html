@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Прототип — Недельный отчёт GitHub</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6fa;color:#172039;font:16px system-ui}main{max-width:880px;margin:auto;padding:44px 20px}
+h1{font-size:clamp(28px,5vw,44px);margin:12px 0}p{color:#526079}.panel,article{background:white;border:1px solid #dbe1ee;border-radius:14px;padding:20px}
+form,.controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px}.controls{margin-top:28px}
+label{display:grid;gap:8px}button,input,select{font:inherit;border-radius:8px;padding:10px 14px;border:1px solid #aab6cd}button{background:#234ac3;color:white;border-color:#234ac3}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.grid strong{display:block;font-size:30px;margin:10px 0 4px}.delta{color:#526079}.split ul{list-style:none;padding:0}.split li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #dbe1ee}.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+#error{color:#a11726}@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+</style>
+<main>
+<p>nullifierx1 / n8n-code-review-test</p>
+<h1>Недельный отчёт GitHub</h1>
+<form class="panel">
+<label>Начало недели<input id="week" type="date"></label>
+<button id="submit">Показать отчёт</button>
+</form>
+<p id="error" role="alert" hidden>Не удалось загрузить отчёт. Повторите попытку.</p>
+<p id="status" role="status"></p>
+<section id="result" hidden>
+<h2>16–22 ноября 2026</h2>
+<div class="grid">
+<article>Создано Issues<strong>8</strong><small class="delta">+8 к прошлой неделе</small></article><article>Закрыто Issues<strong>4</strong><small class="delta">+4 к прошлой неделе</small></article>
+<article>Создано PR<strong>7</strong><small class="delta">+7 к прошлой неделе</small></article><article>Объединено PR<strong>1</strong><small class="delta">+1 к прошлой неделе</small></article>
+</div>
+<div class="split">
+<article><h3>Issues по типам</h3><ul><li>bug <b>2</b></li><li>task <b>1</b></li><li>feature <b>1</b></li><li>unknown <b>4</b></li></ul></article>
+<article><h3>Issues по авторам</h3><ul><li>nullifierx1 <b>8</b></li></ul></article>
+</div>
+<p id="comparison-empty" hidden>Данных за предыдущую неделю нет</p>
+</section>
+<label class="controls">Состояние прототипа
+<select id="state">
+<option value="initial">Исходный экран</option><option value="input">Введена дата</option>
+<option value="loading">Загрузка</option><option value="success">Отчёт</option>
+<option value="empty">Пустая неделя</option><option value="error">Ошибка</option>
+</select></label>
+</main>
+<script>
+const byId = id => document.getElementById(id)
+const state = byId('state')
+const numbers = document.querySelectorAll('.grid strong')
+function render() {
+  const view = state.value
+  byId('week').value = view === 'initial' ? '' : view === 'empty' ? '2026-11-09' : '2026-11-16'
+  byId('submit').disabled = view === 'loading'
+  byId('error').hidden = view !== 'error'
+  byId('status').textContent = view === 'loading' ? 'Загружаем отчёт…' : view === 'empty' ? 'За эту неделю нет активности' : ''
+  byId('result').hidden = !['success', 'empty'].includes(view)
+  document.querySelector('#result h2').textContent = view === 'empty' ? '9–15 ноября 2026' : '16–22 ноября 2026'
+  document.querySelector('.split').hidden = view === 'empty'
+  document.querySelector('.split').style.display = view === 'empty' ? 'none' : ''
+  byId('comparison-empty').hidden = view !== 'empty'
+  document.querySelectorAll('.delta').forEach(delta => { delta.hidden = view === 'empty' })
+  numbers.forEach((number, index) => { number.textContent = view === 'empty' ? '0' : [8, 4, 7, 1][index] })
+}
+state.addEventListener('change', render)
+document.querySelector('form').addEventListener('submit', event => {
+  event.preventDefault()
+  state.value = 'loading'
+  render()
+  setTimeout(() => {
+    if (state.value === 'loading') {
+      state.value = 'success'
+      render()
+    }
+  }, 650)
+})
+render()
+</script>
+</html>

@@ -1,0 +1,97 @@
+
+> n8n-github-weekly-report@0.1.0 test
+> playwright test --grep ошибка сохраняет|вид отчёта
+
+
+Running 2 tests using 2 workers
+
+  ✘  2 tests/visual.spec.ts:4:1 › вид отчёта на широком и узком экране (1.3s)
+  ✘  1 tests/report.spec.ts:80:1 › ошибка сохраняет дату и позволяет повторить запрос (5.8s)
+
+
+  1) tests/report.spec.ts:80:1 › ошибка сохраняет дату и позволяет повторить запрос ────────────────
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('alert')
+    Expected substring: "Не удалось загрузить отчёт"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" getByRole('alert') with timeout 5000ms
+      - waiting for getByRole('alert')
+
+
+      88 |   const submit = page.getByRole('button', { name: 'Показать отчёт' })
+      89 |   await submit.click()
+    > 90 |   await expect(page.getByRole('alert')).toContainText('Не удалось загрузить отчёт')
+         |                                         ^
+      91 |   await expect(field).toHaveValue(activeWeek.weekStart)
+      92 |   await submit.click()
+      93 |   await expect(page.getByRole('status')).toHaveText('Отчёт загружен')
+        at /home/nullifierx1/n8n-github-weekly-report/tests/report.spec.ts:90:41
+
+    Error Context: test-results/report-ошибка-сохраняет-дату-и-позволяет-повторить-запрос/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/report-ошибка-сохраняет-дату-и-позволяет-повторить-запрос/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/report-ошибка-сохраняет-дату-и-позволяет-повторить-запрос/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests/visual.spec.ts:4:1 › вид отчёта на широком и узком экране ───────────────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      33763 pixels (ratio 0.04 of all image pixels) are different.
+
+      Snapshot: report-desktop.png
+
+    Call log:
+      - Expect "toHaveScreenshot(report-desktop.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 33763 pixels (ratio 0.04 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 33763 pixels (ratio 0.04 of all image pixels) are different.
+
+
+       8 |   await page.getByRole('button', { name: 'Показать отчёт' }).click()
+       9 |   await expect(page.getByRole('status')).toHaveText('Отчёт загружен')
+    > 10 |   await expect(page).toHaveScreenshot('report-desktop.png', { animations: 'disabled' })
+         |                      ^
+      11 |   await page.setViewportSize({ width: 390, height: 844 })
+      12 |   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390)
+      13 |   await expect(page).toHaveScreenshot('report-mobile.png', { animations: 'disabled' })
+        at /home/nullifierx1/n8n-github-weekly-report/tests/visual.spec.ts:10:22
+
+    attachment #1: report-desktop (image/png) ──────────────────────────────────────────────────────
+    Expected: tests/visual.spec.ts-snapshots/report-desktop-linux.png
+    Received: test-results/visual-вид-отчёта-на-широком-и-узком-экране/report-desktop-actual.png
+    Diff:     test-results/visual-вид-отчёта-на-широком-и-узком-экране/report-desktop-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/visual-вид-отчёта-на-широком-и-узком-экране/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/visual-вид-отчёта-на-широком-и-узком-экране/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/visual-вид-отчёта-на-широком-и-узком-экране/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    tests/report.spec.ts:80:1 › ошибка сохраняет дату и позволяет повторить запрос ─────────────────
+    tests/visual.spec.ts:4:1 › вид отчёта на широком и узком экране ────────────────────────────────
