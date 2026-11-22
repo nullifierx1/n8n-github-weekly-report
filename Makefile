@@ -2,11 +2,12 @@
 
 NPM ?= npm
 
-.PHONY: help setup install browser run build test check test-report
+.PHONY: help setup install browser run demo build test check test-report
 
 help:
 	@echo 'make setup       Install dependencies and Chromium'
 	@echo 'make run         Start the frontend'
+	@echo 'make demo        Start the frontend on 127.0.0.1'
 	@echo 'make build       Type-check and build the frontend'
 	@echo 'make test        Run all Playwright tests'
 	@echo 'make check       Build and run all Playwright tests'
@@ -23,6 +24,9 @@ browser:
 
 run:
 	$(NPM) run dev
+
+demo:
+	$(NPM) run dev -- --host 127.0.0.1
 
 build:
 	$(NPM) run build
