@@ -1,0 +1,98 @@
+npm run build
+
+> n8n-github-weekly-report@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2141 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.49 kB │ gzip:  0.34 kB
+dist/assets/index-Brxjn6IH.css   22.72 kB │ gzip:  5.12 kB
+dist/assets/index-BmC-pN3V.js   268.91 kB │ gzip: 84.99 kB
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "src/components/ui/label.tsx" may not be preserved when bundling.
+   ╭─[ src/components/ui/label.tsx:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@radix-ui/react-label/dist/index.mjs" may not be preserved when bundling.
+   ╭─[ node_modules/@radix-ui/react-label/dist/index.mjs:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@radix-ui/react-primitive/dist/index.mjs" may not be preserved when bundling.
+   ╭─[ node_modules/@radix-ui/react-primitive/dist/index.mjs:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/lucide-react/dist/esm/context.mjs" may not be preserved when bundling.
+   ╭─[ node_modules/lucide-react/dist/esm/context.mjs:2:1 ]
+   │
+ 2 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/lucide-react/dist/esm/Icon.mjs" may not be preserved when bundling.
+   ╭─[ node_modules/lucide-react/dist/esm/Icon.mjs:2:1 ]
+   │
+ 2 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+✓ built in 548ms
+make test
+make[1]: Entering directory '~/n8n-github-weekly-report'
+npm test
+
+> n8n-github-weekly-report@0.1.0 test
+> playwright test
+
+[WebServer] (node:2385) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 12 tests using 3 workers
+
+(node:2419) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2426) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2420) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   3 tests/report-contract.spec.ts:49:1 › сохранённые строки дают тот же JSON, что и клиентские фикстуры (17ms)
+  ✓   4 tests/report-contract.spec.ts:59:1 › контракт различает отсутствие строки, неверную дату и сбой (13ms)
+  ✓   5 tests/report-contract.spec.ts:79:1 › дубликаты и повреждённые строки не становятся отчётом (14ms)
+  ✓   6 tests/report-contract.spec.ts:89:1 › экспорт только читает нужную таблицу, ошибки идут по отдельной ветке (9ms)
+  ✓   1 tests/report.spec.ts:6:1 › выбор недели и отправка с клавиатуры показывают отчёт (2.5s)
+  ✓   2 tests/visual.spec.ts:4:1 › вид отчёта на широком и узком экране (3.1s)
+  ✓   7 tests/report.spec.ts:32:1 › пустая дата и день в середине недели показывают ошибку поля (1.2s)
+  ✓   9 tests/report.spec.ts:46:1 › пока ответ задержан, повторная отправка даёт один запрос (899ms)
+  ✓   8 tests/visual.spec.ts:16:1 › вид нулевого отчёта, отсутствующей записи и ошибки на узком экране (1.6s)
+  ✓  10 tests/report.spec.ts:70:1 › сохранённая нулевая неделя показывает четыре нуля и отсутствие сравнения (665ms)
+  ✓  11 tests/report.spec.ts:80:1 › отсутствующая строка не показывает нулевой отчёт (631ms)
+  ✓  12 tests/report.spec.ts:90:1 › ошибка сохраняет дату и позволяет повторить запрос (733ms)
+
+  12 passed (12.2s)
+make[1]: Leaving directory '~/n8n-github-weekly-report'
